@@ -14,7 +14,7 @@ RUN . /opt/venv/bin/activate && pip install --upgrade pip
 
 # Копируем requirements.txt и устанавливаем зависимости
 COPY requirements.txt /app/
-RUN . /opt/venv/bin/activate && pip install --no-cache-dir -r /app/requirements.txt
+RUN . /opt/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 
 # Копируем остальные файлы проекта в контейнер
 COPY . /app/
