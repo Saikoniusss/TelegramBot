@@ -1,26 +1,25 @@
-# Указываем базовый образ Python
-FROM python:3.9-slim
+FROM python:3.10-slim
 
-# Устанавливаем зависимости для сборки пакетов
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Создаем и активируем виртуальное окружение
-RUN python -m venv /opt/venv
-
-# Обновляем pip
-RUN . /opt/venv/bin/activate && pip install --upgrade pip
-
-# Копируем requirements.txt и устанавливаем зависимости
-COPY requirements.txt /app/
-RUN . /opt/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
-
-# Копируем остальные файлы проекта в контейнер
-COPY . /app/
-
-# Устанавливаем рабочую директорию
+# Установим рабочую директорию
 WORKDIR /app
 
-# Указываем команду для запуска приложения
-CMD ["/opt/venv/bin/python", "bot.py"]
+# Скопируем требования в контейнер
+COPY requirements.txt /app/
+
+# Установим зависимости системы (если это нужно для пакетов из requirements.txt)
+RUN apt-get update && apt-get install -y gcc
+
+# Создадим виртуальное окружение
+RUN python -m venv /opt/venv
+
+# Установим зависимости внутри виртуального окружения
+RUN /opt/venv/bin/python -m pip install --no-cache-dir -r /app/requirements.txt
+
+# Установим переменные окружения, чтобы использовать виртуальное окружение
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Скопируем код приложения в контейнер
+COPY . /app/
+
+# Запустим приложение
+CMD ["python", "bot.py"]
