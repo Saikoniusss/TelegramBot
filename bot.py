@@ -5,7 +5,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from flask import Flask, request
 
 # Загружаем переменные окружения
-TOKEN = os.getenv("7680391173:AAFKVj46iSW1-VD4d1FefBT4maMg9xHu0Vk")
+TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например, "https://your-railway-url.up.railway.app"
 DATA_FILE = "forwards.json"
 
