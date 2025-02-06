@@ -3,6 +3,10 @@ import json
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 from flask import Flask, request
+from dotenv import load_dotenv
+
+# Загружаем переменные из файла .env
+load_dotenv()
 
 # Загружаем переменные окружения
 TOKEN = os.getenv("BOT_TOKEN")
