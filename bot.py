@@ -1,20 +1,20 @@
 import os
 import json
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
-from flask import Flask, request
-from dotenv import load_dotenv
 import logging
 import asyncio
+from flask import Flask, request
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from dotenv import load_dotenv
 
-# Загружаем переменные из файла .env
+# Загружаем переменные окружения
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например, "https://your-railway-url.up.railway.app"
-DATA_FILE = "forwards.json"
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например, "https://telegrambot-production-xxxx.up.railway.app"
+PORT = int(os.getenv("PORT", 5000))
 
-# Логирование для отладки
+# Настраиваем логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,10 @@ server = Flask(__name__)
 # Создаем Telegram приложение
 app = Application.builder().token(TOKEN).build()
 
-# Загружаем настройки пересылки из файла
+# Файл для хранения настроек пересылки
+DATA_FILE = "forwards.json"
+
+# Загружаем настройки пересылки
 if os.path.exists(DATA_FILE):
     with open(DATA_FILE, "r") as f:
         forwards = json.load(f)
@@ -61,27 +64,43 @@ async def forward_message(update: Update, context: CallbackContext):
             logger.info(f"Checking message: {text} against keyword: {rule['keyword']}")
             if rule["keyword"].lower() in text.lower():
                 logger.info(f"Forwarding message: {text}")
-                await context.bot.forward_message(chat_id=int(rule["to"]), from_chat_id=int(chat_id), message_id=update.message.message_id)
+                await context.bot.forward_message(
+                    chat_id=int(rule["to"]),
+                    from_chat_id=int(chat_id),
+                    message_id=update.message.message_id
+                )
 
-# Webhook маршрут для Telegram
+# Webhook маршрут для Telegram (Flask НЕ поддерживает async!)
 @server.route("/webhook", methods=["POST"])
-async def webhook():
+def webhook():
     try:
         data = request.get_json()
         update = Update.de_json(data, app.bot)
-        await app.update_queue.put(update)  # Добавляем в очередь обработки
+        asyncio.run(app.update_queue.put(update))  # Добавляем в очередь обработки
         return "OK", 200
     except Exception as e:
         logger.error(f"Error in webhook: {e}")
         return "Internal Server Error", 500
 
+# Запуск Flask и установка Webhook
+def run_server():
+    """Функция для запуска Flask"""
+    logger.info(f"Starting Flask server on port {PORT}...")
+    server.run(host="0.0.0.0", port=PORT)
+
 async def start_bot():
-    """Запускаем Flask и Telegram Webhook"""
+    """Настройка Telegram Webhook и запуск Flask в отдельном потоке"""
+    logger.info(f"Setting Telegram webhook to {WEBHOOK_URL}/webhook")
     await app.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
-    server.run(host="0.0.0.0", port=5000)
+
+    # Запускаем Flask в отдельном потоке
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, run_server)
 
 if __name__ == "__main__":
+    # Регистрируем обработчики
     app.add_handler(CommandHandler("CreateForward", create_forward))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_message))
 
-    asyncio.run(start_bot())  # Запуск asyncio для Webhook
+    # Запускаем бота и сервер
+    asyncio.run(start_bot())
