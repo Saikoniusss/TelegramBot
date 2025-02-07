@@ -4,7 +4,7 @@ import logging
 import asyncio
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения
@@ -35,7 +35,7 @@ else:
     forwards = {}
 
 # Команда для настройки пересылки
-async def create_forward(update: Update, context: CallbackContext):
+async def create_forward(update: Update, context):
     if len(context.args) < 4:
         await update.message.reply_text("Использование: /CreateForward from GROUP_ID to GROUP_ID by 'ключевое слово'")
         return
@@ -55,7 +55,7 @@ async def create_forward(update: Update, context: CallbackContext):
     await update.message.reply_text(f"✅ Теперь сообщения из {group_from} в {group_to} пересылаются, если содержат: '{keyword}'")
 
 # Обработчик сообщений
-async def forward_message(update: Update, context: CallbackContext):
+async def forward_message(update: Update, context):
     chat_id = str(update.message.chat_id)
     text = update.message.text
 
@@ -70,22 +70,25 @@ async def forward_message(update: Update, context: CallbackContext):
                     message_id=update.message.message_id
                 )
 
-# Webhook маршрут для Telegram (Flask НЕ поддерживает async!)
-@server.route("/webhook", methods=["GET"])
+# Webhook маршрут
+@server.route("/webhook", methods=["POST"])
 def webhook():
     try:
         data = request.get_json()
         update = Update.de_json(data, app.bot)
-        asyncio.run(app.update_queue.put(update))  # Добавляем в очередь обработки
+        asyncio.create_task(app.update_queue.put(update))  # НЕ используем `asyncio.run()`
         return "OK", 200
     except Exception as e:
         logger.error(f"Error in webhook: {e}")
         return "Internal Server Error", 500
+
+# Главная страница для проверки
+@server.route("/")
 def home():
     return "Bot is running!", 200
-# Запуск Flask и установка Webhook
+
+# Запуск Flask в отдельном потоке
 def run_server():
-    """Функция для запуска Flask"""
     logger.info(f"Starting Flask server on port {PORT}...")
     server.run(host="0.0.0.0", port=PORT)
 
@@ -97,6 +100,9 @@ async def start_bot():
     # Запускаем Flask в отдельном потоке
     loop = asyncio.get_event_loop()
     loop.run_in_executor(None, run_server)
+
+    # Запускаем polling, если webhook не работает
+    await app.run_polling()
 
 if __name__ == "__main__":
     # Регистрируем обработчики
