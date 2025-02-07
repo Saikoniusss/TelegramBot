@@ -12,7 +12,7 @@ load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например, "https://telegrambot-production-xxxx.up.railway.app"
-PORT = int(os.getenv("PORT", 5000))
+PORT = int(os.getenv("PORT", 8000))
 
 # Настраиваем логирование
 logging.basicConfig(level=logging.INFO)
