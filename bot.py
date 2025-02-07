@@ -81,7 +81,8 @@ def webhook():
     except Exception as e:
         logger.error(f"Error in webhook: {e}")
         return "Internal Server Error", 500
-
+def home():
+    return "Bot is running!", 200
 # Запуск Flask и установка Webhook
 def run_server():
     """Функция для запуска Flask"""
