@@ -50,7 +50,9 @@ async def forward_message(update: Update, context: CallbackContext):
 
     if chat_id in forwards:
         for rule in forwards[chat_id]:
+            print(f"Checking message: {text} against keyword: {rule['keyword']}")  # Логирование
             if rule["keyword"].lower() in text.lower():
+                print(f"Forwarding message: {text}")  # Логирование
                 await context.bot.forward_message(chat_id=int(rule["to"]), from_chat_id=int(chat_id), message_id=update.message.message_id)
 
 # Webhook для Telegram
