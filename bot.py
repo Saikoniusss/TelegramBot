@@ -71,7 +71,7 @@ async def forward_message(update: Update, context: CallbackContext):
                 )
 
 # Webhook маршрут для Telegram (Flask НЕ поддерживает async!)
-@server.route("/webhook", methods=["POST"])
+@server.route("/webhook", methods=["GET"])
 def webhook():
     try:
         data = request.get_json()
