@@ -81,11 +81,9 @@ def webhook():
 
         update = Update.de_json(data, app.bot)
 
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.create_task(app.update_queue.put(update))  # Асинхронная постановка в очередь
-        else:
-            loop.run_until_complete(app.update_queue.put(update))
+        loop = asyncio.new_event_loop()  # Создаем новый event loop
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(app.update_queue.put(update))
 
         return "OK", 200
     except Exception as e:
@@ -100,7 +98,7 @@ def home():
 # Запуск Flask в отдельном потоке
 def run_server():
     logger.info(f"Starting Flask server on port {PORT}...")
-    server.run(host="0.0.0.0", port=PORT)
+    server.run(host="0.0.0.0", port=PORT, threaded=False)
 
 async def start_bot():
     """Настройка Telegram Webhook и запуск Flask в отдельном потоке"""
