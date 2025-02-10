@@ -56,19 +56,20 @@ async def create_forward(update: Update, context):
 
 # Обработчик сообщений
 async def forward_message(update: Update, context):
-    logger.info(f"🔥 Получено сообщение: {update.message.text}")
     chat_id = str(update.message.chat_id)
-    text = update.message.text
+    text = update.message.text or update.message.caption or ""
+
+    if update.message.from_user.is_bot:
+        logger.info("Message is from a bot, re-sending as a new message...")
 
     if chat_id in forwards:
         for rule in forwards[chat_id]:
-            logger.info(f"Checking message: {text} against keyword: {rule['keyword']}")
             if rule["keyword"].lower() in text.lower():
-                logger.info(f"Forwarding message: {text}")
-                await context.bot.forward_message(
+                logger.info(f"Resending message: {text}")
+                await context.bot.send_message(
                     chat_id=int(rule["to"]),
-                    from_chat_id=int(chat_id),
-                    message_id=update.message.message_id
+                    text=f"🔁 *Переслано из чата:* {update.message.chat.title}\n\n{text}",
+                    parse_mode="Markdown"
                 )
 
 # Webhook маршрут
