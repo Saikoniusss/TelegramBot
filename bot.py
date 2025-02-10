@@ -85,7 +85,7 @@ def webhook():
 # Главная страница для проверки
 @server.route("/")
 def home():
-    return "Bot is running!", 200
+    return "Bot is running!!+!!", 200
 
 # Запуск Flask в отдельном потоке
 def run_server():
