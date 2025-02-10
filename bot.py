@@ -56,6 +56,7 @@ async def create_forward(update: Update, context):
 
 # Обработчик сообщений
 async def forward_message(update: Update, context):
+    logger.info(f"🔥 Получено сообщение: {update.message.text}")
     chat_id = str(update.message.chat_id)
     text = update.message.text
 
@@ -87,12 +88,12 @@ def webhook():
           return "Bad Request: Invalid JSON", 400
 
         logger.info(f"Parsed JSON: {data}")  
+        update = Update.de_json(data, app.bot) 
     
         update = Update.de_json(data, app.bot)
 
-        loop = asyncio.new_event_loop()  # Создаем новый event loop
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(app.update_queue.put(update))
+        # Исправленный вызов
+        asyncio.run(app.process_update(update))
 
         return "OK", 200
     except Exception as e:
@@ -107,7 +108,7 @@ def home():
 # Запуск Flask в отдельном потоке
 def run_server():
     logger.info(f"Starting Flask server on port {PORT}...")
-    server.run(host="0.0.0.0", port=PORT, threaded=False)
+    server.run(host="0.0.0.0", port=PORT)
 
 async def start_bot():
     """Настройка Telegram Webhook и запуск Flask в отдельном потоке"""
