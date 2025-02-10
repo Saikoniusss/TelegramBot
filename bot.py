@@ -74,13 +74,23 @@ async def forward_message(update: Update, context):
 @server.route("/webhook", methods=["POST"])
 def webhook():
     try:
+        logger.info(f"Received webhook request: {request.data}")  
+
         data = request.get_json()
+        logger.info(f"Parsed JSON: {data}")  
+
         update = Update.de_json(data, app.bot)
-        asyncio.create_task(app.update_queue.put(update))  # НЕ используем `asyncio.run()`
+
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(app.update_queue.put(update))  # Асинхронная постановка в очередь
+        else:
+            loop.run_until_complete(app.update_queue.put(update))
+
         return "OK", 200
     except Exception as e:
-        logger.error(f"Error in webhook: {e}")
-        return "Internal Server Error", 500
+        logger.error(f"Error in webhook: {e}", exc_info=True)  
+        return f"Internal Server Error: {str(e)}", 500
 
 # Главная страница для проверки
 @server.route("/")
