@@ -54,23 +54,32 @@ async def create_forward(update: Update, context):
 
     await update.message.reply_text(f"✅ Теперь сообщения из {group_from} в {group_to} пересылаются, если содержат: '{keyword}'")
 
-# Обработчик сообщений
+# Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
-    chat_id = str(update.message.chat_id)
-    text = update.message.text or update.message.caption or ""
+    message = update.message
+    chat_id = str(message.chat_id)
+    text = message.text or message.caption or ""
 
-    if update.message.from_user.is_bot:
-        logger.info("Message is from a bot, re-sending as a new message...")
+    user = message.from_user
+    logger.info(f"Received message from: {user.first_name} (Bot: {user.is_bot}) | Text: {text}")
 
     if chat_id in forwards:
         for rule in forwards[chat_id]:
             if rule["keyword"].lower() in text.lower():
-                logger.info(f"Resending message: {text}")
-                await context.bot.send_message(
-                    chat_id=int(rule["to"]),
-                    text=f"🔁 *Переслано из чата:* {update.message.chat.title}\n\n{text}",
-                    parse_mode="Markdown"
-                )
+                logger.info(f"Processing forwarding rule for {chat_id} → {rule['to']}")
+
+                if user.is_bot:
+                    # Если сообщение от Zabbix или другого бота — копируем текст и отправляем заново
+                    logger.info("Message is from a bot, re-sending as a new message...")
+                    await context.bot.send_message(
+                        chat_id=int(rule["to"]),
+                        text=f"🔁 *Переслано из чата:* {message.chat.title}\n\n{text}",
+                        parse_mode="Markdown"
+                    )
+                else:
+                    # Обычная пересылка сообщения
+                    logger.info("Forwarding message normally.")
+                    await message.forward(chat_id=int(rule["to"]))
 
 # Webhook маршрут
 @server.route("/webhook", methods=["POST"])
@@ -136,7 +145,7 @@ async def start_bot():
 if __name__ == "__main__":
     # Регистрируем обработчики
     app.add_handler(CommandHandler("CreateForward", create_forward))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_message))
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_message)) # Теперь обрабатываем ВСЕ сообщения
 
     # Запускаем бота и сервер
     asyncio.run(start_bot())
