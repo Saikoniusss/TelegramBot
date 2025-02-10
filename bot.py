@@ -93,7 +93,13 @@ def webhook():
         update = Update.de_json(data, app.bot)
 
         # Исправленный вызов
-        asyncio.run(app.process_update(update))
+        update = Update.de_json(data, app.bot)
+
+        loop = asyncio.new_event_loop()  
+        asyncio.set_event_loop(loop)
+
+        loop.run_until_complete(app.process_update(update))  # <--- Используем process_update
+
 
         return "OK", 200
     except Exception as e:
@@ -112,6 +118,8 @@ def run_server():
 
 async def start_bot():
     """Настройка Telegram Webhook и запуск Flask в отдельном потоке"""
+    logger.info(f"Initializing Telegram Application...")
+    await app.initialize()
     logger.info(f"Setting Telegram webhook to {WEBHOOK_URL}/webhook")
     await app.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
 
@@ -121,6 +129,8 @@ async def start_bot():
 
     # Запускаем polling, если webhook не работает
     # await app.run_polling()
+    # Запускаем обработку обновлений
+    await app.start()
 
 if __name__ == "__main__":
     # Регистрируем обработчики
