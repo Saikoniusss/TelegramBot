@@ -119,7 +119,7 @@ async def start_bot():
     loop.run_in_executor(None, run_server)
 
     # Запускаем polling, если webhook не работает
-    await app.run_polling()
+    # await app.run_polling()
 
 if __name__ == "__main__":
     # Регистрируем обработчики
