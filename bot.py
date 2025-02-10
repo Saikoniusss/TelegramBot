@@ -61,7 +61,8 @@ async def forward_message(update: Update, context):
     text = message.text or message.caption or ""
 
     user = message.from_user
-    logger.info(f"Received message from: {user.first_name} (Bot: {user.is_bot}) | Text: {text}")
+    logger.info(f"📩 Получено сообщение: {text}")
+    logger.info(f"👤 Отправитель: {user.first_name} | Бот: {user.is_bot}")
 
     if chat_id in forwards:
         for rule in forwards[chat_id]:
@@ -73,7 +74,7 @@ async def forward_message(update: Update, context):
                     logger.info("Message is from a bot, re-sending as a new message...")
                     await context.bot.send_message(
                         chat_id=int(rule["to"]),
-                        text=f"🔁 *Переслано из чата:* {message.chat.title}\n\n{text}",
+                        text=f"⚠ *Переслано из чата:* {message.chat.title or 'Неизвестный чат'}\n\n{text}",
                         parse_mode="Markdown"
                     )
                 else:
