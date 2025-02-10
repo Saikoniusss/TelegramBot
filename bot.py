@@ -76,9 +76,18 @@ def webhook():
     try:
         logger.info(f"Received webhook request: {request.data}")  
 
+        if not request.is_json:
+          logger.error("Request is not JSON!")
+          return "Unsupported Media Type", 415
+        
         data = request.get_json()
-        logger.info(f"Parsed JSON: {data}")  
 
+        if data is None:
+          logger.error("request.get_json() returned None!")
+          return "Bad Request: Invalid JSON", 400
+
+        logger.info(f"Parsed JSON: {data}")  
+    
         update = Update.de_json(data, app.bot)
 
         loop = asyncio.new_event_loop()  # Создаем новый event loop
