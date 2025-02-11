@@ -56,15 +56,17 @@ async def create_forward(update: Update, context):
 
 # Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
+    logger.info(f"🔹 Вызван forward_message с update: {update}")
     message = update.message
+    if not message:
+        logger.warning("🚨 Нет message в update!")
+        return
     chat_id = str(message.chat_id)
     text = message.text or message.caption or ""
 
     user = message.from_user
     logger.info(f"📩 Получено сообщение: {text}")
     logger.info(f"👤 Отправитель: {user.first_name} | Бот: {user.is_bot}")
-    if user.is_bot:
-        logger.info(f"⚠ Сообщение от бота {user.first_name} ({user.username}) — пересылаем...")
     if chat_id in forwards:
         for rule in forwards[chat_id]:
             if rule["keyword"].lower() in text.lower():
