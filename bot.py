@@ -195,7 +195,6 @@ async def start_bot():
 if __name__ == "__main__":
     # Регистрируем обработчики
     app.add_handler(CommandHandler("CreateForward", create_forward))
-    app.add_handler(MessageHandler(filters.ALL, log_update))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_message)) # Теперь обрабатываем ВСЕ сообщения
 
     # Запускаем бота и сервер
