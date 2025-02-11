@@ -60,8 +60,6 @@ async def forward_message(update: Update, context):
     
     # Берём сообщение из update
     message = update.effective_message  # Работает для всех типов сообщений (message, channel_post)
-    if message.forward_from:
-        logger.info(f"📌 Это пересланное сообщение от {message.forward_from.first_name}")
     if not message:
         logger.warning("🚨 Нет message в update!")
         return
