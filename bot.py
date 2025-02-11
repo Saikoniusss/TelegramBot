@@ -57,16 +57,23 @@ async def create_forward(update: Update, context):
 # Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
     logger.info(f"🔹 Вызван forward_message с update: {update}")
-    message = update.message
+    
+    # Берём сообщение из update
+    message = update.effective_message  # Работает для всех типов сообщений (message, channel_post)
+    
     if not message:
         logger.warning("🚨 Нет message в update!")
         return
+
     chat_id = str(message.chat_id)
     text = message.text or message.caption or ""
 
-    user = message.from_user
+    user = message.from_user or message.sender_chat  # Если сообщение из канала, sender_chat не пустой
+    is_bot = user.is_bot if user else False  # Проверяем, является ли отправитель ботом
+    
     logger.info(f"📩 Получено сообщение: {text}")
-    logger.info(f"👤 Отправитель: {user.first_name} | Бот: {user.is_bot}")
+    logger.info(f"👤 Отправитель: {user.first_name if user else 'Unknown'} | Бот: {is_bot}")
+
     if chat_id in forwards:
         for rule in forwards[chat_id]:
             if rule["keyword"].lower() in text.lower():
@@ -76,8 +83,9 @@ async def forward_message(update: Update, context):
                 # Заголовок сообщения
                 header = f"⚠ *Переслано из:* {message.chat.title or 'Неизвестный чат'}\n\n"
 
-                # Если сообщение от бота (например, Zabbix), просто копируем текст
-                if user.is_bot or message.forward_origin:
+                # Если сообщение от бота (например, через API), просто копируем текст
+                if is_bot:
+                    logger.info("🔁 Пересылаем сообщение от бота как новый текст.")
                     await context.bot.send_message(
                         chat_id=target_chat,
                         text=header + text,
