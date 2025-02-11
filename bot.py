@@ -56,11 +56,12 @@ async def create_forward(update: Update, context):
 
 # Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
-    logger.info(f"🔹 Вызван forward_message с update: {update}")
+    logger.info(f"🔹 Вызван forward_message с update: {update.to_dict()}")  # Логируем всё
     
     # Берём сообщение из update
     message = update.effective_message  # Работает для всех типов сообщений (message, channel_post)
-    
+    if message.forward_from:
+        logger.info(f"📌 Это пересланное сообщение от {message.forward_from.first_name}")
     if not message:
         logger.warning("🚨 Нет message в update!")
         return
@@ -191,7 +192,7 @@ async def start_bot():
 if __name__ == "__main__":
     # Регистрируем обработчики
     app.add_handler(CommandHandler("CreateForward", create_forward))
-    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_message)) # Теперь обрабатываем ВСЕ сообщения
+    app.add_handler(MessageHandler(filters.ALL, forward_message)) # Теперь обрабатываем ВСЕ сообщения
 
     # Запускаем бота и сервер
     asyncio.run(start_bot())
