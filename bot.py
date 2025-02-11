@@ -54,9 +54,6 @@ async def create_forward(update: Update, context):
 
     await update.message.reply_text(f"✅ Теперь сообщения из {group_from} в {group_to} пересылаются, если содержат: '{keyword}'")
 
-async def log_update(update: Update, context):
-    logger.info(f"🔹 Новый Update: {update}")
-
 # Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
     logger.info(f"🔹 Вызван forward_message с update: {update}")
