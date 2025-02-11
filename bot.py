@@ -54,8 +54,16 @@ async def create_forward(update: Update, context):
 
     await update.message.reply_text(f"✅ Теперь сообщения из {group_from} в {group_to} пересылаются, если содержат: '{keyword}'")
 
+processed_updates = set()
+
 # Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
+    update_id = update.update_id
+
+    if update_id in processed_updates:
+        logger.warning(f"🚨 Дубликат update_id: {update_id}, игнорируем!")
+        return
+    processed_updates.add(update_id)
     logger.info(f"🔹 Вызван forward_message с update: {update}")
     message = update.message
     if not message:
@@ -87,7 +95,7 @@ async def forward_message(update: Update, context):
 
 # Webhook маршрут
 @server.route("/webhook", methods=["POST"])
-def webhook():
+async def webhook():
     try:
         logger.info(f"Received webhook request: {request.data}")  
 
@@ -106,11 +114,8 @@ def webhook():
         # Исправленный вызов
         update = Update.de_json(data, app.bot)
 
-        loop = asyncio.new_event_loop()  
-        asyncio.set_event_loop(loop)
-
-        loop.run_until_complete(app.process_update(update))  # <--- Используем process_update
-
+        # Используем `await` напрямую, без создания нового event_loop
+        await app.process_update(update)
 
         return "OK", 200
     except Exception as e:
