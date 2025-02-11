@@ -135,32 +135,29 @@ async def forward_message(update: Update, context):
 @server.route("/webhook", methods=["POST"])
 def webhook():
     try:
-        logger.info(f"Received webhook request: {request.data}")  
-
+        logger.info(f"📥 Получен webhook: {request.data}")  # Логируем весь запрос
+        
         if not request.is_json:
-          logger.error("Request is not JSON!")
-          return "Unsupported Media Type", 415
+            logger.error("❌ Webhook не в JSON формате!")
+            return "Unsupported Media Type", 415
         
         data = request.get_json()
+        if not data:
+            logger.error("❌ Пустой JSON в webhook!")
+            return "Bad Request: Invalid JSON", 400
+        
+        logger.info(f"✅ Разобранный JSON: {json.dumps(data, indent=2)}")
 
-        if data is None:
-          logger.error("request.get_json() returned None!")
-          return "Bad Request: Invalid JSON", 400
-
-        logger.info(f"Parsed JSON: {data}")  
-
-        # Исправленный вызов
+        # Передаём данные боту
         update = Update.de_json(data, app.bot)
 
-        loop = asyncio.new_event_loop()  
+        loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-
-        loop.run_until_complete(app.process_update(update))  # <--- Используем process_update
-
+        loop.run_until_complete(app.process_update(update))
 
         return "OK", 200
     except Exception as e:
-        logger.error(f"Error in webhook: {e}", exc_info=True)  
+        logger.error(f"❌ Ошибка обработки webhook: {e}", exc_info=True)
         return f"Internal Server Error: {str(e)}", 500
 
 # Главная страница для проверки
