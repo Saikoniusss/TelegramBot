@@ -54,6 +54,9 @@ async def create_forward(update: Update, context):
 
     await update.message.reply_text(f"✅ Теперь сообщения из {group_from} в {group_to} пересылаются, если содержат: '{keyword}'")
 
+async def log_update(update: Update, context):
+    logger.info(f"🔹 Новый Update: {update}")
+
 # Обработчик сообщений с поддержкой пересылки от ботов (Zabbix)
 async def forward_message(update: Update, context):
     logger.info(f"🔹 Вызван forward_message с update: {update}")
@@ -192,6 +195,7 @@ async def start_bot():
 if __name__ == "__main__":
     # Регистрируем обработчики
     app.add_handler(CommandHandler("CreateForward", create_forward))
+    app.add_handler(MessageHandler(filters.ALL, log_update))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_message)) # Теперь обрабатываем ВСЕ сообщения
 
     # Запускаем бота и сервер
