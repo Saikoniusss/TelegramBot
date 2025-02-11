@@ -177,8 +177,7 @@ async def start_bot():
     # Удаляем старый вебхук, если он есть
     logger.info("Deleting existing webhook (if any)...")
     await app.bot.delete_webhook()
-    logger.info(f"Setting Telegram webhook to {WEBHOOK_URL}/webhook")
-    await app.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
+
 
     # Запускаем Flask в отдельном потоке
     loop = asyncio.get_event_loop()
