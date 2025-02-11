@@ -70,20 +70,58 @@ async def forward_message(update: Update, context):
     if chat_id in forwards:
         for rule in forwards[chat_id]:
             if rule["keyword"].lower() in text.lower():
-                logger.info(f"Processing forwarding rule for {chat_id} → {rule['to']}")
+                target_chat = int(rule["to"])
+                logger.info(f"📨 Отправляем в {target_chat}")
 
-                if user.is_bot:
-                    # Если сообщение от Zabbix или другого бота — копируем текст и отправляем заново
-                    logger.info("Message is from a bot, re-sending as a new message...")
+                # Заголовок сообщения
+                header = f"⚠ *Переслано из:* {message.chat.title or 'Неизвестный чат'}\n\n"
+
+                # Если сообщение от бота (например, Zabbix), просто копируем текст
+                if user.is_bot or message.forward_origin:
                     await context.bot.send_message(
-                        chat_id=int(rule["to"]),
-                        text=f"⚠ *Переслано из чата:* {message.chat.title or 'Неизвестный чат'}\n\n{text}",
+                        chat_id=target_chat,
+                        text=header + text,
+                        parse_mode="Markdown"
+                    )
+                    return
+
+                # Обрабатываем разные типы сообщений
+                if message.text:
+                    await context.bot.send_message(
+                        chat_id=target_chat,
+                        text=header + text,
+                        parse_mode="Markdown"
+                    )
+                elif message.photo:
+                    await context.bot.send_photo(
+                        chat_id=target_chat,
+                        photo=message.photo[-1].file_id,
+                        caption=header + (message.caption or ""),
+                        parse_mode="Markdown"
+                    )
+                elif message.video:
+                    await context.bot.send_video(
+                        chat_id=target_chat,
+                        video=message.video.file_id,
+                        caption=header + (message.caption or ""),
+                        parse_mode="Markdown"
+                    )
+                elif message.document:
+                    await context.bot.send_document(
+                        chat_id=target_chat,
+                        document=message.document.file_id,
+                        caption=header + (message.caption or ""),
+                        parse_mode="Markdown"
+                    )
+                elif message.voice:
+                    await context.bot.send_voice(
+                        chat_id=target_chat,
+                        voice=message.voice.file_id,
+                        caption=header + (message.caption or ""),
                         parse_mode="Markdown"
                     )
                 else:
-                    # Обычная пересылка сообщения
-                    logger.info("Forwarding message normally.")
-                    await message.forward(chat_id=int(rule["to"]))
+                    logger.warning("⚠ Неизвестный тип сообщения, не пересылаем.")
 
 # Webhook маршрут
 @server.route("/webhook", methods=["POST"])
