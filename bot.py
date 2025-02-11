@@ -63,7 +63,8 @@ async def forward_message(update: Update, context):
     user = message.from_user
     logger.info(f"📩 Получено сообщение: {text}")
     logger.info(f"👤 Отправитель: {user.first_name} | Бот: {user.is_bot}")
-
+    if user.is_bot:
+        logger.info(f"⚠ Сообщение от бота {user.first_name} ({user.username}) — пересылаем...")
     if chat_id in forwards:
         for rule in forwards[chat_id]:
             if rule["keyword"].lower() in text.lower():
