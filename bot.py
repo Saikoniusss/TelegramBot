@@ -102,9 +102,6 @@ def webhook():
           return "Bad Request: Invalid JSON", 400
 
         logger.info(f"Parsed JSON: {data}")  
-        update = Update.de_json(data, app.bot) 
-    
-        update = Update.de_json(data, app.bot)
 
         # Исправленный вызов
         update = Update.de_json(data, app.bot)
